@@ -20,6 +20,11 @@ public class LoadToServer : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+
+    }
+
+    public void ConnectServer()
+    {
         PhotonNetwork.ConnectUsingSettings();
         Debug.Log("Connecting to master");
     }
@@ -118,5 +123,10 @@ public class LoadToServer : MonoBehaviourPunCallbacks
             Instantiate(room, roomContainer).GetComponent<RoomListItem>().Setup(roomList[i]);
 
         }
+    }
+
+    public void StartGame()
+    {
+        PhotonNetwork.LoadLevel(1);
     }
 }
