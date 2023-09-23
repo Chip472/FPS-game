@@ -7,11 +7,15 @@ using TMPro;
 
 public class LoadToServer : MonoBehaviourPunCallbacks
 {
-    [SerializeField] private GameObject loadingScene, lobbyScene, roomScene;
+    [SerializeField] private GameObject loadingScene, lobbyScene, findRoomScene, nameRoomScene, roomScene;
     [SerializeField] private TMP_Text roomNameText;
 
-    [SerializeField] private Transform playerList;
-    [SerializeField] private GameObject player;
+    [SerializeField] private Transform playerList, roomContainer;
+    [SerializeField] private GameObject player, room;
+
+    [SerializeField] private TMP_InputField roomNameInput;
+    [SerializeField] private TMP_Text warningRoomName, warningName;
+    [SerializeField] private PlayerNameManager playerName;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +30,13 @@ public class LoadToServer : MonoBehaviourPunCallbacks
 
     }
 
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        base.OnPlayerEnteredRoom(newPlayer);
+        GameObject playerTxt = Instantiate(player, playerList);
+        playerTxt.GetComponent<TMP_Text>().text = newPlayer.NickName;
+    }
+
     public override void OnConnectedToMaster()
     {
         Debug.Log("Join lobby");
@@ -38,11 +49,38 @@ public class LoadToServer : MonoBehaviourPunCallbacks
         lobbyScene.SetActive(true);
     }
 
+    public void FindRoom()
+    {
+        lobbyScene.SetActive(false);
+        findRoomScene.SetActive(true);
+    }
+
+    public void NameRoom()
+    {
+        if (string.IsNullOrWhiteSpace(playerName.inputName.text))
+        {
+            warningName.text = "PLEASE ENTER A VALID NICKNAME!";
+            return;
+        }
+        lobbyScene.SetActive(false);
+        nameRoomScene.SetActive(true);
+    }
+
+    public void NameRoomBack()
+    {
+        lobbyScene.SetActive(true);
+        nameRoomScene.SetActive(false);
+    }
+
     public void CreateRoom()
     {
-        PhotonNetwork.NickName = "Chip";
-        PhotonNetwork.CreateRoom("Room 1");
-        lobbyScene.SetActive(false);
+        if (string.IsNullOrWhiteSpace(roomNameInput.text))
+        {
+            warningRoomName.text = "PLEASE ENTER A VALID ROOM NAME!";
+            return;
+        }
+        PhotonNetwork.CreateRoom(roomNameInput.text);
+        nameRoomScene.SetActive(false);
         roomScene.SetActive(true);
     }
 
@@ -63,6 +101,22 @@ public class LoadToServer : MonoBehaviourPunCallbacks
         {
             GameObject playerTxt = Instantiate(player, playerList);
             playerTxt.GetComponent<TMP_Text>().text = players[i].NickName;
+        }
+    }
+
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        base.OnRoomListUpdate(roomList);
+
+        foreach (Transform child in roomContainer)
+        {
+            Destroy(child.gameObject);
+        }
+
+        for (int i = 0; i< roomList.Count; i++)
+        {
+            Instantiate(room, roomContainer).GetComponent<RoomListItem>().Setup(roomList[i]);
+
         }
     }
 }
